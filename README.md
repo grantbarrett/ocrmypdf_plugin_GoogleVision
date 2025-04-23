@@ -1,4 +1,6 @@
 # ocrmypdf_plugin_GoogleVision
+A FORK UNDER DILETTANTE DEVELOPMENT WITH NO PROMISES OR PLANS. 
+
 A very minimalistic approach for an ocrmypdf plugin to use Google Vision as OCR engine.
 Tesseract is currently used for rotation, so if Tesseract is not able to determine the correct rotation, there are some problems.
 It doesn't matter for my particular use case, but it might for yours.
