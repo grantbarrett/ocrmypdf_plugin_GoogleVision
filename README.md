@@ -1,4 +1,4 @@
-# OCRmyPDF Google Vision Plugin
+# Son of OCRmyPDF Google Vision Plugin
 
 This repository contains a plugin for [OCRmyPDF](https://github.com/ocrmypdf/OCRmyPDF) that allows using the [Google Cloud Vision API](https://cloud.google.com/vision) as the OCR (Optical Character Recognition) engine instead of the default Tesseract engine.
 
