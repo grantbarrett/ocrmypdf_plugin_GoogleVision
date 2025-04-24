@@ -94,9 +94,8 @@ Use this method if ADC is not suitable for your environment (e.g., some automate
 6.  **Optional:** If using a service account key file (Method 2 for Authentication), add the `--gcv-keyfile /path/to/your/keyfile.json` argument.
 7.  **Optional:** Use `--force-ocr` if your input PDF might already contain some text, to ensure OCR is performed anyway.
 
-\*\*Example Command (using ADC):\*\*
-
-\`\`\`bash  
+## **Example Command (using ADC):**
+  
 ocrmypdf \\  
   \--plugin /path/to/cloned/repo/gvision.py \\  
   \-l eng+fra \\  
@@ -134,17 +133,29 @@ ocrmypdf \\
 8. The renderer creates an invisible text layer in the output PDF, attempting to match the position and scale specified in the hOCR.  
 9. Auxiliary steps like orientation detection and deskewing are delegated to the installed Tesseract engine.
 
-## **Troubleshooting**
+## Troubleshooting
 
-* **google.auth.exceptions.DefaultCredentialsError:** Your Application Default Credentials are not set up correctly or cannot be found. Ensure you have run gcloud auth application-default login in the *same terminal session* where you are running ocrmypdf and that you authenticated with the correct Google account. Alternatively, use the \--gcv-keyfile method.  
-* **ValueError: GCV key file not found:** The path provided to \--gcv-keyfile is incorrect or the file is not readable. Double-check the path.  
-* **Text Layer Missing:**  
-  * Ensure the GCV API call is succeeding (check console output for errors from gvision.py or google.api\_core.exceptions).  
-  * Use \--keep-temporary-files and inspect the .hocr file generated in the temporary directory for one of the pages (e.g., .../page\_001/ocr.hocr). Is it present? Does it contain valid HTML and text content?  
-  * Make sure you are using \--pdf-renderer hocr. If you omit it, the sandwich renderer might be chosen, which failed to produce a text layer in testing.  
-* **Text Misaligned:**  
-  * This is the most common issue if the text layer *is* present but doesn't match the image visually (as seen when highlighting text).  
-  * Ensure you are using \--pdf-renderer hocr.  
-  * The problem likely stems from limitations in the hOCR-to-PDF rendering process, particularly mismatches between the estimated font metrics (size, baseline) in the hOCR and the actual metrics of the font used for rendering the invisible text layer. The calculations in gcv2hocr2.py are heuristics.  
-  * Check the console output for "invalid line box" warnings during the run \- if these reappear, there might still be coordinate calculation issues in gcv2hocr2.py.  
-* **Tesseract Errors (Orientation/Deskew):** Ensure Tesseract is installed correctly and accessible via your system's PATH environment variable. The plugin
+* **`google.auth.exceptions.DefaultCredentialsError`:** Your Application Default Credentials are not set up correctly or cannot be found.
+    * Ensure you have run `gcloud auth application-default login` in the *same terminal session* where you are running `ocrmypdf` (and where your virtual environment is active).
+    * Make sure you authenticated with the Google account linked to the correct GCP project (the one with Vision API enabled).
+    * Alternatively, switch to using the `--gcv-keyfile` method.
+* **`ValueError: GCV key file not found`:** The path provided to `--gcv-keyfile` is incorrect or the file is not readable. Double-check the path and file permissions.
+* **Text Layer Missing in Output PDF:**
+    * Verify the Google Cloud Vision API call succeeded. Check the console output for any errors reported by `gvision.py` or messages starting with `google.api_core.exceptions`.
+    * Run with `--keep-temporary-files` and check the temporary directory. Inside the subdirectories for each page (e.g., `page_001`), ensure both an `.hocr` file (e.g., `ocr.hocr`) and a `.txt` file (e.g., `000001_ocr_tess.txt`) were created.
+    * Open the `.hocr` file. Does it contain valid HTML with `ocr_page`, `ocr_line`, and `ocrx_word` elements? Does it include the recognized text?
+    * Confirm you are using the `--pdf-renderer hocr` argument when running `ocrmypdf`. The `sandwich` renderer may not correctly process the hOCR from this plugin.
+* **Text Misaligned / Incorrect Position:**
+    * This is the most common known issue with the current version. The text layer exists, but highlighting it shows it doesn't precisely overlay the text in the image.
+    * **Ensure `--pdf-renderer hocr` is used.**
+    * The misalignment likely stems from inaccuracies in converting the precise geometry (bounding boxes, font size, baseline) from the GCV response into the hOCR format, and how OCRmyPDF's renderer interprets these hints. The calculations in `gcv2hocr2.py` are heuristics and may not perfectly match the original font metrics or layout.
+    * Check the console output for any "invalid line box" warnings during the run - if these reappear, there might still be coordinate calculation issues in `gcv2hocr2.py`.
+    * Further improvements would likely require more sophisticated analysis of the GCV response or adjustments to the hOCR generation in `gcv2hocr2.py`.
+* **Tesseract Errors (Orientation/Deskew):**
+    * Ensure Tesseract is installed correctly and its executable is in your system's PATH environment variable. OCRmyPDF (and this plugin) needs to be able to run the `tesseract` command.
+    * The plugin logs errors if it cannot find or execute Tesseract for these steps. The main OCR process will still use Google Vision, but pages might not be correctly rotated or deskewed.
+* **Plugin Not Found / Import Errors:**
+    * Make sure your virtual environment is active when running `ocrmypdf`.
+    * Ensure all dependencies (`ocrmypdf`, `google-cloud-vision`, `Pillow`, `reportlab`) were installed correctly within the active virtual environment (`pip list`).
+    * Verify the path provided to `--plugin` points correctly to the `gvision.py` file.
+
